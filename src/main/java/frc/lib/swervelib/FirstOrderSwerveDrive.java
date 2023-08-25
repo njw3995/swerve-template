@@ -44,7 +44,7 @@ public class FirstOrderSwerveDrive extends SwerveDrive
 {
 
   /**
-   * Swerve Kinematics object utilizing second order kinematics.
+   * Swerve Kinematics object utilizing first order kinematics.
    */
   public final  SwerveDriveKinematics        kinematics;
   /**
@@ -99,7 +99,7 @@ public class FirstOrderSwerveDrive extends SwerveDrive
    */
   private double              lastHeadingRadians           = 0;
 
-  private double              swerveTranslationScalar      = 0.8;
+  private double              swerveTranslationScalar;
 
   private double              swerveRotationScalar         = 0.3;
 
@@ -121,6 +121,7 @@ public class FirstOrderSwerveDrive extends SwerveDrive
     swerveController = new SwerveController(controllerConfig);
     // Create Kinematics from swerve module locations.
     kinematics = new SwerveDriveKinematics(config.moduleLocationsMeters);
+    swerveTranslationScalar = Constants.SwerveConstants.SWERVE_NORMAL_TRANSLATION;
 
     // Create an integrator for angle if the robot is being simulated to emulate an IMU
     // If the robot is real, instantiate the IMU instead.
@@ -184,28 +185,6 @@ public class FirstOrderSwerveDrive extends SwerveDrive
   /**
    * The primary method for controlling the drivebase. Takes a Translation2d and a rotation rate, and calculates and
    * commands module states accordingly. Can use either open-loop or closed-loop velocity control for the wheel
-   * velocities. Also has field- and robot-relative modes, which affect how the translation vector is used. This method
-   * defaults to no heading correction.
-   *
-   * @param translation   {@link Translation2d} that is the commanded linear velocity of the robot, in meters per
-   *                      second. In robot-relative mode, positive x is torwards the bow (front) and positive y is
-   *                      torwards port (left). In field-relative mode, positive x is away from the alliance wall (field
-   *                      North) and positive y is torwards the left wall when looking through the driver station glass
-   *                      (field West).
-   * @param rotation      Robot angular rate, in radians per second. CCW positive. Unaffected by field/robot
-   *                      relativity.
-   * @param fieldRelative Drive mode. True for field-relative, false for robot-relative.
-   * @param isOpenLoop    Whether to use closed-loop velocity control. Set to true to disable closed-loop.
-   */
-  public void drive(
-      Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop)
-  {
-    drive(translation, rotation, fieldRelative, isOpenLoop, false);
-  }
-
-  /**
-   * The primary method for controlling the drivebase. Takes a Translation2d and a rotation rate, and calculates and
-   * commands module states accordingly. Can use either open-loop or closed-loop velocity control for the wheel
    * velocities. Also has field- and robot-relative modes, which affect how the translation vector is used.
    *
    * @param translation       {@link Translation2d} that is the commanded linear velocity of the robot, in meters per
@@ -217,16 +196,15 @@ public class FirstOrderSwerveDrive extends SwerveDrive
    *                          relativity.
    * @param fieldRelative     Drive mode. True for field-relative, false for robot-relative.
    * @param isOpenLoop        Whether to use closed-loop velocity control. Set to true to disable closed-loop.
-   * @param headingCorrection Whether to correct heading when driving translationally. Set to true to enable.
    */
   public void drive(
-      Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop, boolean headingCorrection)
+      Translation2d translation, double rotation, boolean fieldRelative, boolean isOpenLoop)
   {
 
     Rotation2d heading = getYaw();
-    if(Constants.SwerveConstants.chassisVelocityCorrection)
+    if(Constants.SwerveConstants.CHASSIS_VELOCITY_CORRECTION)
     {
-      heading = heading.plus(Rotation2d.fromDegrees(getYawVel().getDegrees() * Constants.SwerveConstants.dtConstant));
+      heading = heading.plus(Rotation2d.fromDegrees(getYawVel().getDegrees() * Constants.SwerveConstants.DT_CONSTANT));
     }
     // Creates a robot-relative ChassisSpeeds object, converting from field-relative speeds if
     // necessary.
@@ -238,7 +216,7 @@ public class FirstOrderSwerveDrive extends SwerveDrive
 
     // Heading Angular Velocity Deadband, might make a configuration option later.
     // Originally made by Team 1466 Webb Robotics.
-    if (Constants.SwerveConstants.headingCorrection)
+    if (Constants.SwerveConstants.HEADING_CORRECTION)
     {
       if (Math.abs(rotation) < 0.01)
       {
@@ -250,7 +228,7 @@ public class FirstOrderSwerveDrive extends SwerveDrive
       } 
       else
       {
-        lastHeadingRadians = getYaw().getRadians() + getYawVel().getRadians() * Constants.SwerveConstants.dtConstant;
+        lastHeadingRadians = getYaw().getRadians() + getYawVel().getRadians() * Constants.SwerveConstants.DT_CONSTANT;
       }
     }
 
